@@ -1,4 +1,5 @@
 const { app } = require('@azure/functions');
+const timerFunction = require('../index');
 
 app.timer('timerTrigger1', {
     schedule: '0 */1 * * * *',

@@ -9,6 +9,7 @@
   "dependencies": {
     "@azure/functions": "^4.0.0",
     "@azure/storage-blob": "^12.23.0",
+    "@grpc/grpc-js": "^1.11.1",
     "json2csv": "^6.0.0-alpha.2",
     "mongodb": "^6.8.0"
   },
