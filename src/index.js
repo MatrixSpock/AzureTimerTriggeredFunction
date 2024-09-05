@@ -52,6 +52,7 @@ module.exports = async function (context, myTimer) {
     const timeStamp = new Date().toISOString();
     context.log('JavaScript timer trigger function started:', timeStamp);
 
+    context.log("Fetching ENV variables");
     const {
         MongoDBAtlasConnectionString,
         DatabaseName,
@@ -63,22 +64,26 @@ module.exports = async function (context, myTimer) {
     // Input validation
     if (!MongoDBAtlasConnectionString || !DatabaseName || !CollectionName || 
         !AzureBlobStorageConnectionString || !BlobContainerName) {
-        context.log.error('Missing required environment variables');
+        context.log('Missing required environment variables');
         return;
     }
 
     let client;
 
     try {
+        context.log("Attempting to connect to MongoDB");
         client = await retryOperation(() => connectToMongoDB(MongoDBAtlasConnectionString, {
             serverSelectionTimeoutMS: 5000,
             connectTimeoutMS: 10000
         }));
         context.log('Connected to MongoDB successfully');
 
+        context.log("Fetching DB Name");
         const db = client.db(DatabaseName);
+        context.log("Fetching Collection Name");
         const collection = db.collection(CollectionName);
-
+        
+        context.log("Fetching documents");
         const documents = await fetchDataFromMongoDB(collection);
         context.log(`Retrieved ${documents.length} documents from MongoDB`);
 
@@ -99,17 +104,17 @@ module.exports = async function (context, myTimer) {
 
         context.log('Function execution completed successfully');
     } catch (error) {
-        context.log.error(`Error occurred: ${error.message}`);
-        context.log.error(`Error stack: ${error.stack}`);
+        context.log(`Error occurred: ${error.message}`);
+        context.log(`Error stack: ${error.stack}`);
 
         if (error instanceof CustomError) {
-            context.log.error(`Custom error type: ${error.type}`);
+            context.log(`Custom error type: ${error.type}`);
         } else if (error.name === 'MongoServerSelectionError') {
-            context.log.error('Failed to select a MongoDB server. Check your network settings and connection string.');
+            context.log('Failed to select a MongoDB server. Check your network settings and connection string.');
         } else if (error.name === 'MongoNetworkError') {
-            context.log.error('MongoDB network error. Ensure your MongoDB Atlas IP whitelist includes your function app\'s IP address.');
+            context.log('MongoDB network error. Ensure your MongoDB Atlas IP whitelist includes your function app\'s IP address.');
         } else {
-            context.log.error('An unexpected error occurred.');
+            context.log('An unexpected error occurred.');
         }
     } finally {
         if (client) {
@@ -117,7 +122,7 @@ module.exports = async function (context, myTimer) {
                 await client.close();
                 context.log('MongoDB connection closed');
             } catch (closeError) {
-                context.log.error(`Error occurred while closing MongoDB connection: ${closeError.message}`);
+                context.log(`Error occurred while closing MongoDB connection: ${closeError.message}`);
             }
         }
     }
